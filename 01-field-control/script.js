@@ -1,9 +1,10 @@
-// โจทย์ 1 — Field Control
-// ในหน้า Account Form ให้เขียน JavaScript เมื่อเปิด Form:
-// เงื่อนไข
-// ถ้า telephone1 มีค่า → ให้ field emailaddress1 เป็น Read Only
-// ถ้า telephone1 ไม่มีค่า → ให้ emailaddress1 สามารถแก้ไขได้
+// Exercise 1 — Field Control
+// In the Account Form, write JavaScript that runs when the form is opened.
+// Conditions:
+// If telephone1 has a value → make the emailaddress1 field Read Only.
+// If telephone1 has no value → make the emailaddress1 field editable.
 
+// solution
 function checkEmail_Onloads(executionContext){
     const formContext = executionContext.getFormContext()
     const telephone1 = formContext.getAttribute("telephone1")

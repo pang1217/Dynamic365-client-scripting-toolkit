@@ -1,16 +1,19 @@
 /*
-โจทย์ 4 — Filter Lookup
-ใน Contact Form มี Lookup:
+Exercise 4 — Filter Lookup
+In the Contact Form, there is a Lookup field:
 parentcustomerid
-ต้องการให้ User สามารถเลือกเฉพาะ Active Account
-ห้ามแสดง Contact ใน Lookup
+
+Requirements:
+Users should only be able to select Active Accounts.
+Contacts must not be displayed in the Lookup.
 */
 
+// Solution
 function ListContact_OnLoad(executionContext){
     const formContext = executionContext.getFormContext()
     const control = formContext.getControl("parentcustomerid")
     control.addPreSearch(function (){filterAccount(control)})
-    // VVVV สามารถเขียนแบบนี้ได้เหมือนกัน
+    // VVVV -- Can write like this (closure)
     // control.addPreSearch(() => filterAccount(control));
 }
 

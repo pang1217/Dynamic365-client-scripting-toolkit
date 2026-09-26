@@ -148,7 +148,7 @@ The repository also practices safe handling of Lookup values and asynchronous We
 * [x] Exercise 04 — Filter Lookup
 * [x] Exercise 05 — Lookup Value
 * [x] Exercise 06 — Retrieve Record
-* [ ] Exercise 07 — Retrieve Multiple Records
+* [x] Exercise 07 — Retrieve Multiple Records
 * [ ] Exercise 08 — Lookup + Web API
 * [ ] Exercise 09 — Form Notification
 

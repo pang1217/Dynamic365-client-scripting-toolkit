@@ -1,17 +1,20 @@
-// โจทย์ 6 — Retrieve Record
-// เมื่อเปิด Contact Form ให้ใช้:
-// parentcustomerid
-// หา Account ที่เกี่ยวข้องด้วย Xrm.WebApi.retrieveRecord()
-// แล้วดึง:
-// name
-// telephone1
-// websiteurl
-// ออกมาแสดงใน Console
-// ต้อง handle ด้วยว่า
-// parentcustomerid ไม่มีค่า
-// API Error
+/*
+Exercise 6 — Retrieve Record
+When the Contact Form is opened:
+Use the parentcustomerid lookup field.
+Retrieve the related Account using Xrm.WebApi.retrieveRecord().
 
+Then retrieve and display the following information in the Console:
+name
+telephone1
+websiteurl
 
+Error Handling:
+Handle the case where parentcustomerid has no value.
+Handle API errors appropriately.
+*/
+
+// solution
 function RetriveRecord(executionContext){
     const formContext = executionContext.getFormContext()
     const parentcustomerid = formContext.getAttribute("parentcustomerid").getValue()

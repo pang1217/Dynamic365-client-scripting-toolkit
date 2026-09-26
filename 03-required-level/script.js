@@ -1,17 +1,16 @@
-// โจทย์ 3 — Required Level
-// ใน Contact Form มี fields:
+// Exercise 3 — Required Level
+// In the Contact Form, there are the following fields:
 // firstname
 // lastname
 // emailaddress1
 // telephone1
-// เมื่อ preferredcontactmethodcode มีค่าเป็น:
-// Email
-// ให้ emailaddress1 เป็น Required
-// ถ้าเป็น:
-// Phone
-// ให้ telephone1 เป็น Required
-// และ field ที่ไม่ได้ใช้ต้องกลับเป็น Not Required
 
+// When preferredcontactmethodcode has the following values:
+// Email → Set emailaddress1 to Required.
+// Phone → Set telephone1 to Required.
+// The field that is not being used must be changed back to Not Required.
+
+//solution1
 function RequiredContact_Onchange(executionContext){
     const formContext = executionContext.getFormContext()
     const preferredcontactmethodcode = formContext.getAttribute("preferredcontactmethodcode")
@@ -31,7 +30,8 @@ function RequiredContact_Onchange(executionContext){
     }
 }
 
-// recommended this one cuz its shot and easy to edit 
+//solution2
+// recommended this one cuz its shot and easy to edit when u want to add new contact channel
 function RequiredContact_OnChange(executionContext) {
     const formContext = executionContext.getFormContext();
     const method = formContext

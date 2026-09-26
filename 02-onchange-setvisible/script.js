@@ -1,13 +1,14 @@
-// โจทย์ 2 — OnChange
-// เมื่อ User เปลี่ยนค่า industrycode
-// ให้ทำงานดังนี้:
-// Industry	Action : field
-// Manufacturing	แสดง description
-// Finance	แสดง description
-// อื่น ๆ	ซ่อน description
+// Exercise 2 — OnChange
+// When the user changes the value of industrycode, perform the following actions:
+// Industry	Action :
+// Manufacturing -->	Show the description field
+// Finance	     -->    Show the description field
+// Others	     -->    Hide the description field
 
 
+//solution
 const IndustryCode_ShowDes = ["Manufacturing", "Finance"]
+
 function IndustryCode_OnChange(executionContext){
     const formContext = executionContext.getFormContext()
     const industrycode = formContext.getAttribute("industrycode")
