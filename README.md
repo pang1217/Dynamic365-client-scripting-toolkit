@@ -1,173 +1,165 @@
-# Dynamics 365 JavaScript Practice
+# Dynamic 365 Client Scripting Toolkit
 
-A collection of JavaScript exercises for practicing **Microsoft Dynamics 365 / Power Apps Model-driven Apps Client API**.
+> A curated collection of reusable client-side patterns for **Dynamics 365 / Power Apps model-driven apps** — form scripting, lookup filtering, field manipulation, and Dataverse Web API operations.
+>
+> Built exclusively on the modern Client API. Legacy `Xrm.Page` is intentionally avoided.
 
-This repository focuses on practical form scripting, lookup handling, field manipulation, and Dataverse Web API operations.
+![Platform](https://img.shields.io/badge/platform-Dynamics%20365-0078D4)
+![Dataverse](https://img.shields.io/badge/Dataverse-Web%20API-742774)
+![Language](https://img.shields.io/badge/JavaScript-ES6%2B-F7DF1E)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-## 🎯 Goals
+---
 
-* Practice Dynamics 365 Client API
-* Improve JavaScript skills for Model-driven Apps
-* Learn reusable patterns for form scripting
-* Practice working with Lookup fields
-* Work with Dataverse Web API
-* Build practical examples based on real-world scenarios
+## Why this repo
 
-## 🛠️ Technologies
+Most Dynamics 365 client scripts in the wild are copy-pasted, untyped, and still call deprecated APIs. This repo collects the patterns I use in real model-driven app implementations, each isolated so it can be dropped into a solution as a web resource with minimal changes.
 
-* JavaScript
-* Microsoft Dynamics 365
-* Power Apps Model-driven Apps
-* Dataverse
-* Dynamics 365 Client API
-* Xrm.WebApi
+Every example follows three rules:
 
-## 📚 Exercises
+- **Modern API only** — `executionContext` / `formContext`, never `Xrm.Page`
+- **Safe by default** — null-checked lookups, guarded async calls
+- **Self-contained** — each pattern runs on its own, no hidden dependencies
 
-| #  | Exercise                  | Topics                                                                               |
-| -- | ------------------------- | ------------------------------------------------------------------------------------ |
-| 01 | Field Control             | `executionContext`, `formContext`, `getAttribute()`, `getControl()`, `setDisabled()` |
-| 02 | OnChange & Visibility     | `addOnChange()`, `getValue()`, `setVisible()`                                        |
-| 03 | Required Level            | `setRequiredLevel()`, Object / Map configuration                                     |
-| 04 | Filter Lookup             | `addPreSearch()`, `addCustomFilter()`, FetchXML                                      |
-| 05 | Lookup Value              | Lookup Array, `id`, `name`, `entityType`                                             |
-| 06 | Retrieve Record           | `Xrm.WebApi.retrieveRecord()`                                                        |
-| 07 | Retrieve Multiple Records | `Xrm.WebApi.retrieveMultipleRecords()`                                               |
-| 08 | Lookup + Web API          | Lookup handling + Dataverse Web API                                                  |
-| 09 | Form Notification          | Risk Checker + Form Notification                                                  |
+---
 
-> More exercises will be added as I continue learning and practicing.
+## Patterns
 
-## 📁 Project Structure
+| # | Pattern | Client API surface |
+|---|---------|--------------------|
+| 01 | **Field Control** | `executionContext`, `formContext`, `getAttribute()`, `getControl()`, `setDisabled()` |
+| 02 | **OnChange & Visibility** | `addOnChange()`, `getValue()`, `setVisible()` |
+| 03 | **Required Level** | `setRequiredLevel()`, config-driven Object / Map |
+| 04 | **Lookup Filtering** | `addPreSearch()`, `addCustomFilter()`, FetchXML |
+| 05 | **Lookup Value Handling** | Lookup array, `id`, `name`, `entityType` |
+| 06 | **Retrieve Record** | `Xrm.WebApi.retrieveRecord()` |
+| 07 | **Retrieve Multiple Records** | `Xrm.WebApi.retrieveMultipleRecords()` |
+| 08 | **Lookup + Web API** | Lookup resolution combined with Dataverse queries |
+| 09 | **Form Notification** | Risk checker with `setFormNotification()` |
 
-```text
-dynamics365-javascript-practice/
+New patterns are added as they prove useful in production scenarios.
+
+---
+
+## Project structure
+
+```
+d365-client-scripting-toolkit/
 │
 ├── README.md
 │
-├── 01-field-control/
-│   └── script.js
+├── form-controls/
+│   ├── field-control.js
+│   ├── onchange-visibility.js
+│   └── required-level.js
 │
-├── 02-onchange-setvisible/
-│   └── script.js
+├── lookups/
+│   ├── filter-lookup.js
+│   ├── lookup-value.js
+│   └── lookup-webapi.js
 │
-├── 03-required-level/
-│   └── script.js
+├── webapi/
+│   ├── retrieve-record.js
+│   └── retrieve-multiple-records.js
 │
-├── 04-filter-lookup/
-│   └── script.js
-│
-├── 05-lookup-value/
-│   └── script.js
-│
-├── 06-retrieve-record/
-│   └── script.js
-│
-├── 07-retrieve-multiple-records/
-│   └── script.js
-│
-├── 08-lookup-webapi/
-│   └── script.js
-│
-└── 09-form-notification
-    └── script.js
-```
-****
-## 🧠 Topics Covered
-
-### Form Context
-
-```javascript
-const formContext = executionContext.getFormContext()
+└── notifications/
+    └── form-notification.js
 ```
 
-### Attribute
+---
 
-```javascript
-const attribute = formContext.getAttribute("fieldname")
-const value = attribute.getValue()
+## Core concepts
+
+The toolkit draws a hard line between the two objects developers most often confuse.
+
+**Attribute — the data layer**
+
+```js
+const formContext = executionContext.getFormContext();
+const attribute   = formContext.getAttribute("fieldname");
+const value       = attribute.getValue();
 ```
 
-### Control
+Use it for reading and writing values, required level, and change events.
 
-```javascript
-const control = formContext.getControl("fieldname")
+**Control — the UI layer**
+
+```js
+const control = formContext.getControl("fieldname");
+control.setVisible(false);
+control.setDisabled(true);
 ```
 
-### Lookup
+Use it for visibility, enablement, and lookup filtering.
 
-```javascript
-const lookup = formContext
-    .getAttribute("parentcustomerid")
-    .getValue()
+| Concern | Entry point | Typical methods |
+|---|---|---|
+| Data | `getAttribute()` | `getValue()`, `setValue()`, `setRequiredLevel()`, `addOnChange()` |
+| UI | `getControl()` | `setVisible()`, `setDisabled()`, `addPreSearch()`, `setNotification()` |
 
-const id = lookup[0].id
-const name = lookup[0].name
-const entityType = lookup[0].entityType
+---
+
+## Working with lookups
+
+Lookup attributes return an **array**, not an object — the single most common source of runtime errors in D365 scripting.
+
+```js
+const lookup = formContext.getAttribute("parentcustomerid").getValue();
+
+if (lookup && lookup.length > 0) {
+    const { id, name, entityType } = lookup[0];
+    // id arrives wrapped in braces: {00000000-0000-0000-0000-000000000000}
+    const cleanId = id.replace(/[{}]/g, "");
+}
 ```
 
-### Dataverse Web API
+Always guard before indexing. Always strip the braces before passing the id to the Web API.
 
-```javascript
+---
+
+## Dataverse Web API
+
+```js
 Xrm.WebApi.retrieveRecord(
     "account",
     accountId,
     "?$select=name,telephone1,websiteurl"
-)
+).then(
+    result => { /* apply to form */ },
+    error  => { /* surface to user, don't swallow */ }
+);
 ```
 
-## 🔑 Key Principles
+Query patterns covered in the examples:
 
-The exercises focus on understanding the difference between:
-
-```text
-Attribute
-    ↓
-getAttribute()
-    ↓
-getValue() / setValue()
-```
-
-and:
-
-```text
-Control
-    ↓
-getControl()
-    ↓
-setVisible() / setDisabled()
-```
-
-The repository also practices safe handling of Lookup values and asynchronous Web API operations.
-
-## 🚀 Learning Progress
-
-* [x] Exercise 01 — Field Control
-* [x] Exercise 02 — OnChange & Visibility
-* [x] Exercise 03 — Required Level
-* [x] Exercise 04 — Filter Lookup
-* [x] Exercise 05 — Lookup Value
-* [x] Exercise 06 — Retrieve Record
-* [x] Exercise 07 — Retrieve Multiple Records
-* [ ] Exercise 08 — Lookup + Web API
-* [ ] Exercise 09 — Form Notification
-
-## 📌 Notes
-
-These exercises are created for learning and practice purposes.
-
-The examples use modern Dynamics 365 Client API patterns such as:
-
-* `executionContext`
-* `formContext`
-* `Xrm.WebApi`
-* Lookup APIs
-* Dataverse Web API
-* Event handlers
-
-Legacy APIs such as `Xrm.Page` are intentionally avoided.
+- `$select` — never retrieve columns you don't use
+- `$filter` — server-side filtering
+- `$expand` — related record traversal in a single round trip
+- FetchXML — for lookup pre-search filtering
 
 ---
 
+## Usage
+
+1. Open the pattern folder you need and copy the script
+2. Replace the schema names with the ones from your environment
+3. Upload as a **JavaScript web resource** in your solution
+4. Register the entry function on the relevant form event
+5. Tick **Pass execution context as first parameter**
+
+---
+
+## Requirements
+
+- Dynamics 365 / Power Apps model-driven app
+- Dataverse environment with system customizer privileges
+- Modern Client API (Unified Interface)
+
+---
+
+## License
+
+MIT
+---
+
 **Author:** Nathaphan Pantong
-**Focus:** JavaScript / Dynamics 365 / Power Platform
