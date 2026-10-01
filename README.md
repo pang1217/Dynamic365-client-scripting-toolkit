@@ -43,6 +43,7 @@ Every example follows three rules:
 | 09 | **Customer Risk & Notification**   | Business logic with `setFormNotification()`                                          |
 | 10 | **Customer Information Assistant** | Lookup, Web API, business logic, and notifications                                   |
 | 11 | **Create Related Record**          | `Xrm.WebApi.createRecord()`, `@odata.bind`, Entity Reference                         |
+| 12 | **Update Record**          | `Xrm.WebApi.updateRecord()`, Record ID, update data                               |
 
 New patterns are added as they prove useful in production scenarios.
 
@@ -69,7 +70,8 @@ d365-client-scripting-toolkit/
 ├── webapi/
 │   ├── retrieve-record.js
 │   ├── retrieve-multiple-records.js
-│   └── create-record.js
+│   ├── create-record.js
+│   └── update-record.js
 │
 └── notifications/
     └── form-notification.js
@@ -158,7 +160,7 @@ The toolkit covers the main CRUD operations progressively.
 | Retrieve          | `retrieveRecord()`          | Covered |
 | Retrieve Multiple | `retrieveMultipleRecords()` | Covered |
 | Create            | `createRecord()`            | Covered |
-| Update            | `updateRecord()`            | Planned |
+| Update            | `updateRecord()`            | Covered |
 | Delete            | `deleteRecord()`            | Planned |
 
 ### Query patterns
@@ -257,20 +259,20 @@ The exercises gradually move from basic Promise handling toward reusable asynchr
 
 | #  | Exercise                       | Status      |
 | -- | ------------------------------ | ----------- |
-| 01 | Field Control                  | ✅ Completed |
-| 02 | OnChange & Visibility          | ✅ Completed |
-| 03 | Required Level                 | ✅ Completed |
-| 04 | Lookup Filtering               | ✅ Completed |
-| 05 | Lookup Value Handling          | ✅ Completed |
-| 06 | Retrieve Record                | ✅ Completed |
-| 07 | Retrieve Multiple Records      | ✅ Completed |
-| 08 | Lookup + Web API               | ✅ Completed |
-| 09 | Customer Risk & Notification   | ✅ Completed |
-| 10 | Customer Information Assistant | ✅ Completed |
-| 11 | Create Related Record          | ✅ Completed |
-| 12 | Update Record                  | 🔲 Planned  |
-| 13 | Delete Record                  | 🔲 Planned  |
-| 14 | Advanced Query & Filtering     | 🔲 Planned  |
+| 01 | Field Control                  | [x] Completed |
+| 02 | OnChange & Visibility          | [x] Completed |
+| 03 | Required Level                 | [x] Completed |
+| 04 | Lookup Filtering               | [x] Completed |
+| 05 | Lookup Value Handling          | [x] Completed |
+| 06 | Retrieve Record                | [x] Completed |
+| 07 | Retrieve Multiple Records      | [x] Completed |
+| 08 | Lookup + Web API               | [x] Completed |
+| 09 | Customer Risk & Notification   | [x] Completed |
+| 10 | Customer Information Assistant | [x] Completed |
+| 11 | Create Related Record          | [x] Completed |
+| 12 | Update Record                  | [x] Completed  |
+| 13 | Delete Record                  | [] Planned  |
+| 14 | Advanced Query & Filtering     | [] Planned  |
 
 ---
 
