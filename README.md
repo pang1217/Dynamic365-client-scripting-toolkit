@@ -1,12 +1,17 @@
 # Dynamic 365 Client Scripting Toolkit
 
-> A curated collection of reusable client-side patterns for **Dynamics 365 / Power Apps model-driven apps** — form scripting, lookup filtering, field manipulation, and Dataverse Web API operations.
+> A curated collection of reusable client-side patterns for **Dynamics 365 / Power Apps model-driven apps** — form scripting, lookup filtering, field manipulation, notifications, and Dataverse Web API operations.
+
 >
+
 > Built exclusively on the modern Client API. Legacy `Xrm.Page` is intentionally avoided.
 
 ![Platform](https://img.shields.io/badge/platform-Dynamics%20365-0078D4)
+
 ![Dataverse](https://img.shields.io/badge/Dataverse-Web%20API-742774)
+
 ![Language](https://img.shields.io/badge/JavaScript-ES6%2B-F7DF1E)
+
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -17,25 +22,27 @@ Most Dynamics 365 client scripts in the wild are copy-pasted, untyped, and still
 
 Every example follows three rules:
 
-- **Modern API only** — `executionContext` / `formContext`, never `Xrm.Page`
-- **Safe by default** — null-checked lookups, guarded async calls
-- **Self-contained** — each pattern runs on its own, no hidden dependencies
+* **Modern API only** — `executionContext` / `formContext`, never `Xrm.Page`
+* **Safe by default** — null-checked lookups, guarded async calls
+* **Self-contained** — each pattern runs on its own, no hidden dependencies
 
 ---
 
 ## Patterns
 
-| # | Pattern | Client API surface |
-|---|---------|--------------------|
-| 01 | **Field Control** | `executionContext`, `formContext`, `getAttribute()`, `getControl()`, `setDisabled()` |
-| 02 | **OnChange & Visibility** | `addOnChange()`, `getValue()`, `setVisible()` |
-| 03 | **Required Level** | `setRequiredLevel()`, config-driven Object / Map |
-| 04 | **Lookup Filtering** | `addPreSearch()`, `addCustomFilter()`, FetchXML |
-| 05 | **Lookup Value Handling** | Lookup array, `id`, `name`, `entityType` |
-| 06 | **Retrieve Record** | `Xrm.WebApi.retrieveRecord()` |
-| 07 | **Retrieve Multiple Records** | `Xrm.WebApi.retrieveMultipleRecords()` |
-| 08 | **Lookup + Web API** | Lookup resolution combined with Dataverse queries |
-| 09 | **Form Notification** | Risk checker with `setFormNotification()` |
+| #  | Pattern                            | Client API surface                                                                   |
+| -- | ---------------------------------- | ------------------------------------------------------------------------------------ |
+| 01 | **Field Control**                  | `executionContext`, `formContext`, `getAttribute()`, `getControl()`, `setDisabled()` |
+| 02 | **OnChange & Visibility**          | `addOnChange()`, `getValue()`, `setVisible()`                                        |
+| 03 | **Required Level**                 | `setRequiredLevel()`, config-driven Object / Map                                     |
+| 04 | **Lookup Filtering**               | `addPreSearch()`, `addCustomFilter()`, FetchXML                                      |
+| 05 | **Lookup Value Handling**          | Lookup array, `id`, `name`, `entityType`                                             |
+| 06 | **Retrieve Record**                | `Xrm.WebApi.retrieveRecord()`                                                        |
+| 07 | **Retrieve Multiple Records**      | `Xrm.WebApi.retrieveMultipleRecords()`                                               |
+| 08 | **Lookup + Web API**               | Lookup resolution combined with Dataverse queries                                    |
+| 09 | **Customer Risk & Notification**   | Business logic with `setFormNotification()`                                          |
+| 10 | **Customer Information Assistant** | Lookup, Web API, business logic, and notifications                                   |
+| 11 | **Create Related Record**          | `Xrm.WebApi.createRecord()`, `@odata.bind`, Entity Reference                         |
 
 New patterns are added as they prove useful in production scenarios.
 
@@ -43,8 +50,9 @@ New patterns are added as they prove useful in production scenarios.
 
 ## Project structure
 
-```
+```text
 d365-client-scripting-toolkit/
+
 │
 ├── README.md
 │
@@ -60,7 +68,8 @@ d365-client-scripting-toolkit/
 │
 ├── webapi/
 │   ├── retrieve-record.js
-│   └── retrieve-multiple-records.js
+│   ├── retrieve-multiple-records.js
+│   └── create-record.js
 │
 └── notifications/
     └── form-notification.js
@@ -72,30 +81,34 @@ d365-client-scripting-toolkit/
 
 The toolkit draws a hard line between the two objects developers most often confuse.
 
-**Attribute — the data layer**
+### **Attribute — the data layer**
 
 ```js
 const formContext = executionContext.getFormContext();
-const attribute   = formContext.getAttribute("fieldname");
-const value       = attribute.getValue();
+
+const attribute = formContext.getAttribute("fieldname");
+
+const value = attribute.getValue();
 ```
 
 Use it for reading and writing values, required level, and change events.
 
-**Control — the UI layer**
+### **Control — the UI layer**
 
 ```js
 const control = formContext.getControl("fieldname");
+
 control.setVisible(false);
+
 control.setDisabled(true);
 ```
 
 Use it for visibility, enablement, and lookup filtering.
 
-| Concern | Entry point | Typical methods |
-|---|---|---|
-| Data | `getAttribute()` | `getValue()`, `setValue()`, `setRequiredLevel()`, `addOnChange()` |
-| UI | `getControl()` | `setVisible()`, `setDisabled()`, `addPreSearch()`, `setNotification()` |
+| Concern | Entry point      | Typical methods                                                        |
+| ------- | ---------------- | ---------------------------------------------------------------------- |
+| Data    | `getAttribute()` | `getValue()`, `setValue()`, `setRequiredLevel()`, `addOnChange()`      |
+| UI      | `getControl()`   | `setVisible()`, `setDisabled()`, `addPreSearch()`, `setNotification()` |
 
 ---
 
@@ -104,16 +117,24 @@ Use it for visibility, enablement, and lookup filtering.
 Lookup attributes return an **array**, not an object — the single most common source of runtime errors in D365 scripting.
 
 ```js
-const lookup = formContext.getAttribute("parentcustomerid").getValue();
+const lookup = formContext
+    .getAttribute("parentcustomerid")
+    .getValue();
 
 if (lookup && lookup.length > 0) {
+
     const { id, name, entityType } = lookup[0];
-    // id arrives wrapped in braces: {00000000-0000-0000-0000-000000000000}
+
+    // id may arrive wrapped in braces:
+    // {00000000-0000-0000-0000-000000000000}
+
     const cleanId = id.replace(/[{}]/g, "");
 }
 ```
 
-Always guard before indexing. Always strip the braces before passing the id to the Web API.
+Always guard before indexing.
+
+When using a Lookup ID with the Dataverse Web API, normalize the GUID before constructing an Entity Reference.
 
 ---
 
@@ -130,12 +151,86 @@ Xrm.WebApi.retrieveRecord(
 );
 ```
 
-Query patterns covered in the examples:
+The toolkit covers the main CRUD operations progressively.
 
-- `$select` — never retrieve columns you don't use
-- `$filter` — server-side filtering
-- `$expand` — related record traversal in a single round trip
-- FetchXML — for lookup pre-search filtering
+| Operation         | API                         | Status  |
+| ----------------- | --------------------------- | ------- |
+| Retrieve          | `retrieveRecord()`          | Covered |
+| Retrieve Multiple | `retrieveMultipleRecords()` | Covered |
+| Create            | `createRecord()`            | Covered |
+| Update            | `updateRecord()`            | Planned |
+| Delete            | `deleteRecord()`            | Planned |
+
+### Query patterns
+
+* `$select` — retrieve only the columns you need
+* `$filter` — server-side filtering
+* `$expand` — related record traversal
+* `$orderby` — server-side sorting
+* `$top` — limit returned records
+* FetchXML — lookup pre-search filtering
+
+---
+
+## Entity References
+
+Related Dataverse records can be connected using `@odata.bind`.
+
+Example:
+
+```js
+const accountId = parentcustomerid[0].id.replace(/[{}]/g, "");
+
+const data = {
+    subject: "Follow up with Customer",
+    description: "Customer follow-up task",
+    "regardingobjectid_account@odata.bind":
+        `/accounts(${accountId})`
+};
+
+Xrm.WebApi.createRecord("task", data);
+```
+
+This creates a Task and sets the selected Account as its **Regarding** record.
+
+---
+
+## Async JavaScript
+
+The examples use both Promise-based and `async/await` patterns.
+
+### Promise
+
+```js
+Xrm.WebApi.retrieveRecord(
+    "account",
+    accountId,
+    "?$select=name"
+).then(
+    result => {
+        console.log(result.name);
+    },
+    error => {
+        console.log(error.message);
+    }
+);
+```
+
+### Async / Await
+
+```js
+async function retrieveAccountData(accountId) {
+
+    return await Xrm.WebApi.retrieveRecord(
+        "account",
+        accountId,
+        "?$select=name"
+    );
+
+}
+```
+
+The exercises gradually move from basic Promise handling toward reusable asynchronous functions.
 
 ---
 
@@ -151,15 +246,38 @@ Query patterns covered in the examples:
 
 ## Requirements
 
-- Dynamics 365 / Power Apps model-driven app
-- Dataverse environment with system customizer privileges
-- Modern Client API (Unified Interface)
+* Dynamics 365 / Power Apps model-driven app
+* Dataverse environment
+* Modern Client API (Unified Interface)
+* JavaScript web resources
+
+---
+
+## Progress
+
+| #  | Exercise                       | Status      |
+| -- | ------------------------------ | ----------- |
+| 01 | Field Control                  | ✅ Completed |
+| 02 | OnChange & Visibility          | ✅ Completed |
+| 03 | Required Level                 | ✅ Completed |
+| 04 | Lookup Filtering               | ✅ Completed |
+| 05 | Lookup Value Handling          | ✅ Completed |
+| 06 | Retrieve Record                | ✅ Completed |
+| 07 | Retrieve Multiple Records      | ✅ Completed |
+| 08 | Lookup + Web API               | ✅ Completed |
+| 09 | Customer Risk & Notification   | ✅ Completed |
+| 10 | Customer Information Assistant | ✅ Completed |
+| 11 | Create Related Record          | ✅ Completed |
+| 12 | Update Record                  | 🔲 Planned  |
+| 13 | Delete Record                  | 🔲 Planned  |
+| 14 | Advanced Query & Filtering     | 🔲 Planned  |
 
 ---
 
 ## License
 
 MIT
+
 ---
 
 **Author:** Nathaphan Pantong
