@@ -44,6 +44,7 @@ Every example follows three rules:
 | 10 | **Customer Information Assistant** | Lookup, Web API, business logic, and notifications                                   |
 | 11 | **Create Related Record**          | `Xrm.WebApi.createRecord()`, `@odata.bind`, Entity Reference                         |
 | 12 | **Update Record**          | `Xrm.WebApi.updateRecord()`, Record ID, update data                               |
+| 13 | **Delete Record**          | `Xrm.WebApi.deleteRecord()`, Entity, Record ID                               |
 
 New patterns are added as they prove useful in production scenarios.
 
@@ -52,7 +53,7 @@ New patterns are added as they prove useful in production scenarios.
 ## Project structure
 
 ```text
-d365-client-scripting-toolkit/
+Dynamic365-client-scripting-toolkit/
 
 │
 ├── README.md
@@ -71,7 +72,8 @@ d365-client-scripting-toolkit/
 │   ├── retrieve-record.js
 │   ├── retrieve-multiple-records.js
 │   ├── create-record.js
-│   └── update-record.js
+│   ├── update-record.js
+│   └── delete-record.js
 │
 └── notifications/
     └── form-notification.js
@@ -161,7 +163,7 @@ The toolkit covers the main CRUD operations progressively.
 | Retrieve Multiple | `retrieveMultipleRecords()` | Covered |
 | Create            | `createRecord()`            | Covered |
 | Update            | `updateRecord()`            | Covered |
-| Delete            | `deleteRecord()`            | Planned |
+| Delete            | `deleteRecord()`            | Covered |
 
 ### Query patterns
 
@@ -223,7 +225,7 @@ Xrm.WebApi.retrieveRecord(
 ```js
 async function retrieveAccountData(accountId) {
 
-    return await Xrm.WebApi.retrieveRecord(
+    return Xrm.WebApi.retrieveRecord(
         "account",
         accountId,
         "?$select=name"
@@ -271,7 +273,7 @@ The exercises gradually move from basic Promise handling toward reusable asynchr
 | 10 | Customer Information Assistant | [x] Completed |
 | 11 | Create Related Record          | [x] Completed |
 | 12 | Update Record                  | [x] Completed  |
-| 13 | Delete Record                  | [] Planned  |
+| 13 | Delete Record                  | [x] Completed  |
 | 14 | Advanced Query & Filtering     | [] Planned  |
 
 ---
