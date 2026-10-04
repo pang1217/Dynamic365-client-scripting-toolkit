@@ -2,8 +2,6 @@
 
 > A curated collection of reusable client-side patterns for **Dynamics 365 / Power Apps model-driven apps** — form scripting, lookup filtering, field manipulation, notifications, and Dataverse Web API operations.
 
->
-
 > Built exclusively on the modern Client API. Legacy `Xrm.Page` is intentionally avoided.
 
 ![Platform](https://img.shields.io/badge/platform-Dynamics%20365-0078D4)
@@ -43,8 +41,9 @@ Every example follows three rules:
 | 09 | **Customer Risk & Notification**   | Business logic with `setFormNotification()`                                          |
 | 10 | **Customer Information Assistant** | Lookup, Web API, business logic, and notifications                                   |
 | 11 | **Create Related Record**          | `Xrm.WebApi.createRecord()`, `@odata.bind`, Entity Reference                         |
-| 12 | **Update Record**          | `Xrm.WebApi.updateRecord()`, Record ID, update data                               |
-| 13 | **Delete Record**          | `Xrm.WebApi.deleteRecord()`, Entity, Record ID                               |
+| 12 | **Update Record**                  | `Xrm.WebApi.updateRecord()`, Record ID, update data                                  |
+| 13 | **Delete Record**                  | `Xrm.WebApi.deleteRecord()`, Entity, Record ID                                       |
+| 14 | **Advanced Query & Filtering**     | `$select`, `$filter`, `$orderby`, `$top`, `retrieveMultipleRecords()`                |
 
 New patterns are added as they prove useful in production scenarios.
 
@@ -73,7 +72,8 @@ Dynamic365-client-scripting-toolkit/
 │   ├── retrieve-multiple-records.js
 │   ├── create-record.js
 │   ├── update-record.js
-│   └── delete-record.js
+│   ├── delete-record.js
+│   └── advanced-query.js
 │
 └── notifications/
     └── form-notification.js
@@ -167,12 +167,29 @@ The toolkit covers the main CRUD operations progressively.
 
 ### Query patterns
 
+The toolkit also demonstrates common OData query options:
+
 * `$select` — retrieve only the columns you need
 * `$filter` — server-side filtering
-* `$expand` — related record traversal
 * `$orderby` — server-side sorting
 * `$top` — limit returned records
+* `$expand` — related record traversal
 * FetchXML — lookup pre-search filtering
+
+Example:
+
+```js
+const query =
+    "?$select=name,telephone1,revenue" +
+    "&$filter=statecode eq 0 and revenue gt 1000000" +
+    "&$orderby=revenue desc" +
+    "&$top=5";
+
+Xrm.WebApi.retrieveMultipleRecords(
+    "account",
+    query
+);
+```
 
 ---
 
@@ -203,7 +220,7 @@ This creates a Task and sets the selected Account as its **Regarding** record.
 
 The examples use both Promise-based and `async/await` patterns.
 
-### Promise
+### **Promise**
 
 ```js
 Xrm.WebApi.retrieveRecord(
@@ -220,7 +237,7 @@ Xrm.WebApi.retrieveRecord(
 );
 ```
 
-### Async / Await
+### **Async / Await**
 
 ```js
 async function retrieveAccountData(accountId) {
@@ -259,8 +276,8 @@ The exercises gradually move from basic Promise handling toward reusable asynchr
 
 ## Progress
 
-| #  | Exercise                       | Status      |
-| -- | ------------------------------ | ----------- |
+| #  | Exercise                       | Status        |
+| -- | ------------------------------ | ------------- |
 | 01 | Field Control                  | [x] Completed |
 | 02 | OnChange & Visibility          | [x] Completed |
 | 03 | Required Level                 | [x] Completed |
@@ -272,9 +289,9 @@ The exercises gradually move from basic Promise handling toward reusable asynchr
 | 09 | Customer Risk & Notification   | [x] Completed |
 | 10 | Customer Information Assistant | [x] Completed |
 | 11 | Create Related Record          | [x] Completed |
-| 12 | Update Record                  | [x] Completed  |
-| 13 | Delete Record                  | [x] Completed  |
-| 14 | Advanced Query & Filtering     | [] Planned  |
+| 12 | Update Record                  | [x] Completed |
+| 13 | Delete Record                  | [x] Completed |
+| 14 | Advanced Query & Filtering     | [x] Completed |
 
 ---
 
