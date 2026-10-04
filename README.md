@@ -44,6 +44,7 @@ Every example follows three rules:
 | 12 | **Update Record**                  | `Xrm.WebApi.updateRecord()`, Record ID, update data                                  |
 | 13 | **Delete Record**                  | `Xrm.WebApi.deleteRecord()`, Entity, Record ID                                       |
 | 14 | **Advanced Query & Filtering**     | `$select`, `$filter`, `$orderby`, `$top`, `retrieveMultipleRecords()`                |
+| 15 | **Expand Related Records**         | `$expand`, Navigation Property, Related Entity                                       |
 
 New patterns are added as they prove useful in production scenarios.
 
@@ -53,7 +54,6 @@ New patterns are added as they prove useful in production scenarios.
 
 ```text
 Dynamic365-client-scripting-toolkit/
-
 │
 ├── README.md
 │
@@ -73,7 +73,8 @@ Dynamic365-client-scripting-toolkit/
 │   ├── create-record.js
 │   ├── update-record.js
 │   ├── delete-record.js
-│   └── advanced-query.js
+│   ├── advanced-query.js
+│   └── expand-related-records.js
 │
 └── notifications/
     └── form-notification.js
@@ -173,7 +174,7 @@ The toolkit also demonstrates common OData query options:
 * `$filter` — server-side filtering
 * `$orderby` — server-side sorting
 * `$top` — limit returned records
-* `$expand` — related record traversal
+* `$expand` — retrieve related records
 * FetchXML — lookup pre-search filtering
 
 Example:
@@ -190,6 +191,46 @@ Xrm.WebApi.retrieveMultipleRecords(
     query
 );
 ```
+
+### Related Records with `$expand`
+
+`$expand` can be used to retrieve related records through a navigation property in the same Web API query.
+
+Example:
+
+```js
+const query =
+    "?$select=name" +
+    "&$filter=statecode eq 0" +
+    "&$expand=primarycontactid($select=fullname,emailaddress1)";
+
+Xrm.WebApi.retrieveMultipleRecords(
+    "account",
+    query
+);
+```
+
+The expanded record can then be accessed through the navigation property:
+
+```js
+account.primarycontactid.fullname
+account.primarycontactid.emailaddress1
+```
+
+Conceptually:
+
+```text
+Account
+│
+├── name
+│
+└── primarycontactid
+    │
+    ├── fullname
+    └── emailaddress1
+```
+
+This allows related entity data to be retrieved together with the main entity instead of making a separate Web API request for each related record.
 
 ---
 
@@ -241,13 +282,11 @@ Xrm.WebApi.retrieveRecord(
 
 ```js
 async function retrieveAccountData(accountId) {
-
     return Xrm.WebApi.retrieveRecord(
         "account",
         accountId,
         "?$select=name"
     );
-
 }
 ```
 
@@ -292,6 +331,7 @@ The exercises gradually move from basic Promise handling toward reusable asynchr
 | 12 | Update Record                  | [x] Completed |
 | 13 | Delete Record                  | [x] Completed |
 | 14 | Advanced Query & Filtering     | [x] Completed |
+| 15 | Expand Related Records         | [x] Completed |
 
 ---
 
