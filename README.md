@@ -21,30 +21,33 @@ Most Dynamics 365 client scripts in the wild are copy-pasted, untyped, and still
 Every example follows three rules:
 
 * **Modern API only** — `executionContext` / `formContext`, never `Xrm.Page`
+
 * **Safe by default** — null-checked lookups, guarded async calls
+
 * **Self-contained** — each pattern runs on its own, no hidden dependencies
 
 ---
 
 ## Patterns
 
-| #  | Pattern                            | Client API surface                                                                   |
-| -- | ---------------------------------- | ------------------------------------------------------------------------------------ |
-| 01 | **Field Control**                  | `executionContext`, `formContext`, `getAttribute()`, `getControl()`, `setDisabled()` |
-| 02 | **OnChange & Visibility**          | `addOnChange()`, `getValue()`, `setVisible()`                                        |
-| 03 | **Required Level**                 | `setRequiredLevel()`, config-driven Object / Map                                     |
-| 04 | **Lookup Filtering**               | `addPreSearch()`, `addCustomFilter()`, FetchXML                                      |
-| 05 | **Lookup Value Handling**          | Lookup array, `id`, `name`, `entityType`                                             |
-| 06 | **Retrieve Record**                | `Xrm.WebApi.retrieveRecord()`                                                        |
-| 07 | **Retrieve Multiple Records**      | `Xrm.WebApi.retrieveMultipleRecords()`                                               |
-| 08 | **Lookup + Web API**               | Lookup resolution combined with Dataverse queries                                    |
-| 09 | **Customer Risk & Notification**   | Business logic with `setFormNotification()`                                          |
-| 10 | **Customer Information Assistant** | Lookup, Web API, business logic, and notifications                                   |
-| 11 | **Create Related Record**          | `Xrm.WebApi.createRecord()`, `@odata.bind`, Entity Reference                         |
-| 12 | **Update Record**                  | `Xrm.WebApi.updateRecord()`, Record ID, update data                                  |
-| 13 | **Delete Record**                  | `Xrm.WebApi.deleteRecord()`, Entity, Record ID                                       |
-| 14 | **Advanced Query & Filtering**     | `$select`, `$filter`, `$orderby`, `$top`, `retrieveMultipleRecords()`                |
-| 15 | **Expand Related Records**         | `$expand`, Navigation Property, Related Entity                                       |
+| #  | Pattern                                | Client API surface                                                                   |
+| -- | -------------------------------------- | ------------------------------------------------------------------------------------ |
+| 01 | **Field Control**                      | `executionContext`, `formContext`, `getAttribute()`, `getControl()`, `setDisabled()` |
+| 02 | **OnChange & Visibility**              | `addOnChange()`, `getValue()`, `setVisible()`                                        |
+| 03 | **Required Level**                     | `setRequiredLevel()`, config-driven Object / Map                                     |
+| 04 | **Lookup Filtering**                   | `addPreSearch()`, `addCustomFilter()`, FetchXML                                      |
+| 05 | **Lookup Value Handling**              | Lookup array, `id`, `name`, `entityType`                                             |
+| 06 | **Retrieve Record**                    | `Xrm.WebApi.retrieveRecord()`                                                        |
+| 07 | **Retrieve Multiple Records**          | `Xrm.WebApi.retrieveMultipleRecords()`                                               |
+| 08 | **Lookup + Web API**                   | Lookup resolution combined with Dataverse queries                                    |
+| 09 | **Customer Risk & Notification**       | Business logic with `setFormNotification()`                                          |
+| 10 | **Customer Information Assistant**     | Lookup, Web API, business logic, and notifications                                   |
+| 11 | **Create Related Record**              | `Xrm.WebApi.createRecord()`, `@odata.bind`, Entity Reference                         |
+| 12 | **Update Record**                      | `Xrm.WebApi.updateRecord()`, Record ID, update data                                  |
+| 13 | **Delete Record**                      | `Xrm.WebApi.deleteRecord()`, Entity, Record ID                                       |
+| 14 | **Advanced Query & Filtering**         | `$select`, `$filter`, `$orderby`, `$top`, `retrieveMultipleRecords()`                |
+| 15 | **Expand Related Records**             | `$expand`, Navigation Property, Related Entity                                       |
+| 16 | **Expand Related Records + Filtering** | `$expand`, Related Entity, nested `$filter`                                          |
 
 New patterns are added as they prove useful in production scenarios.
 
@@ -74,7 +77,8 @@ Dynamic365-client-scripting-toolkit/
 │   ├── update-record.js
 │   ├── delete-record.js
 │   ├── advanced-query.js
-│   └── expand-related-records.js
+│   ├── expand-related-records.js
+│   └── expand-related-records-filter.js
 │
 └── notifications/
     └── form-notification.js
@@ -134,6 +138,7 @@ if (lookup && lookup.length > 0) {
     // {00000000-0000-0000-0000-000000000000}
 
     const cleanId = id.replace(/[{}]/g, "");
+
 }
 ```
 
@@ -171,10 +176,15 @@ The toolkit covers the main CRUD operations progressively.
 The toolkit also demonstrates common OData query options:
 
 * `$select` — retrieve only the columns you need
+
 * `$filter` — server-side filtering
+
 * `$orderby` — server-side sorting
+
 * `$top` — limit returned records
-* `$expand` — retrieve related records
+
+* `$expand` — related record traversal
+
 * FetchXML — lookup pre-search filtering
 
 Example:
@@ -194,7 +204,7 @@ Xrm.WebApi.retrieveMultipleRecords(
 
 ### Related Records with `$expand`
 
-`$expand` can be used to retrieve related records through a navigation property in the same Web API query.
+`$expand` allows a Web API query to retrieve related records through a navigation property.
 
 Example:
 
@@ -210,27 +220,58 @@ Xrm.WebApi.retrieveMultipleRecords(
 );
 ```
 
-The expanded record can then be accessed through the navigation property:
+The returned structure can be accessed through the navigation property:
+
+```text
+account
+├── name
+└── primarycontactid
+    ├── fullname
+    └── emailaddress1
+```
+
+For example:
 
 ```js
 account.primarycontactid.fullname
 account.primarycontactid.emailaddress1
 ```
 
-Conceptually:
+### Filtering Related Records
+
+A `$filter` inside `$expand` applies to the related entity rather than the primary entity.
+
+Example:
+
+```js
+const query =
+    "?$select=name" +
+    "&$filter=statecode eq 0" +
+    "&$expand=primarycontactid(" +
+        "$select=fullname,emailaddress1" +
+        "&$filter=emailaddress1 ne null" +
+    ")";
+
+Xrm.WebApi.retrieveMultipleRecords(
+    "account",
+    query
+);
+```
+
+In this example:
 
 ```text
 Account
 │
-├── name
+├── $filter=statecode eq 0
+│   └── Only Active Accounts
 │
-└── primarycontactid
-    │
-    ├── fullname
-    └── emailaddress1
+└── $expand=primarycontactid
+    └── $filter=emailaddress1 ne null
+        └── Only related Contacts with Email
 ```
 
-This allows related entity data to be retrieved together with the main entity instead of making a separate Web API request for each related record.
+This pattern is useful when the main record and its related records require different filtering conditions.
 
 ---
 
@@ -282,11 +323,13 @@ Xrm.WebApi.retrieveRecord(
 
 ```js
 async function retrieveAccountData(accountId) {
+
     return Xrm.WebApi.retrieveRecord(
         "account",
         accountId,
         "?$select=name"
     );
+
 }
 ```
 
@@ -315,23 +358,24 @@ The exercises gradually move from basic Promise handling toward reusable asynchr
 
 ## Progress
 
-| #  | Exercise                       | Status        |
-| -- | ------------------------------ | ------------- |
-| 01 | Field Control                  | [x] Completed |
-| 02 | OnChange & Visibility          | [x] Completed |
-| 03 | Required Level                 | [x] Completed |
-| 04 | Lookup Filtering               | [x] Completed |
-| 05 | Lookup Value Handling          | [x] Completed |
-| 06 | Retrieve Record                | [x] Completed |
-| 07 | Retrieve Multiple Records      | [x] Completed |
-| 08 | Lookup + Web API               | [x] Completed |
-| 09 | Customer Risk & Notification   | [x] Completed |
-| 10 | Customer Information Assistant | [x] Completed |
-| 11 | Create Related Record          | [x] Completed |
-| 12 | Update Record                  | [x] Completed |
-| 13 | Delete Record                  | [x] Completed |
-| 14 | Advanced Query & Filtering     | [x] Completed |
-| 15 | Expand Related Records         | [x] Completed |
+| #  | Exercise                               | Status        |
+| -- | -------------------------------------- | ------------- |
+| 01 | Field Control                          | [x] Completed |
+| 02 | OnChange & Visibility                  | [x] Completed |
+| 03 | Required Level                         | [x] Completed |
+| 04 | Lookup Filtering                       | [x] Completed |
+| 05 | Lookup Value Handling                  | [x] Completed |
+| 06 | Retrieve Record                        | [x] Completed |
+| 07 | Retrieve Multiple Records              | [x] Completed |
+| 08 | Lookup + Web API                       | [x] Completed |
+| 09 | Customer Risk & Notification           | [x] Completed |
+| 10 | Customer Information Assistant         | [x] Completed |
+| 11 | Create Related Record                  | [x] Completed |
+| 12 | Update Record                          | [x] Completed |
+| 13 | Delete Record                          | [x] Completed |
+| 14 | Advanced Query & Filtering             | [x] Completed |
+| 15 | Expand Related Records                 | [x] Completed |
+| 16 | Expand Related Records + Filtering     | [x] Completed |
 
 ---
 
