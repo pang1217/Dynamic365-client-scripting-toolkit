@@ -30,24 +30,25 @@ Every example follows three rules:
 
 ## Patterns
 
-| #  | Pattern                                | Client API surface                                                                   |
-| -- | -------------------------------------- | ------------------------------------------------------------------------------------ |
-| 01 | **Field Control**                      | `executionContext`, `formContext`, `getAttribute()`, `getControl()`, `setDisabled()` |
-| 02 | **OnChange & Visibility**              | `addOnChange()`, `getValue()`, `setVisible()`                                        |
-| 03 | **Required Level**                     | `setRequiredLevel()`, config-driven Object / Map                                     |
-| 04 | **Lookup Filtering**                   | `addPreSearch()`, `addCustomFilter()`, FetchXML                                      |
-| 05 | **Lookup Value Handling**              | Lookup array, `id`, `name`, `entityType`                                             |
-| 06 | **Retrieve Record**                    | `Xrm.WebApi.retrieveRecord()`                                                        |
-| 07 | **Retrieve Multiple Records**          | `Xrm.WebApi.retrieveMultipleRecords()`                                               |
-| 08 | **Lookup + Web API**                   | Lookup resolution combined with Dataverse queries                                    |
-| 09 | **Customer Risk & Notification**       | Business logic with `setFormNotification()`                                          |
-| 10 | **Customer Information Assistant**     | Lookup, Web API, business logic, and notifications                                   |
-| 11 | **Create Related Record**              | `Xrm.WebApi.createRecord()`, `@odata.bind`, Entity Reference                         |
-| 12 | **Update Record**                      | `Xrm.WebApi.updateRecord()`, Record ID, update data                                  |
-| 13 | **Delete Record**                      | `Xrm.WebApi.deleteRecord()`, Entity, Record ID                                       |
-| 14 | **Advanced Query & Filtering**         | `$select`, `$filter`, `$orderby`, `$top`, `retrieveMultipleRecords()`                |
-| 15 | **Expand Related Records**             | `$expand`, Navigation Property, Related Entity                                       |
-| 16 | **Expand Related Records + Filtering** | `$expand`, Related Entity, nested `$filter`                                          |
+| #  | Pattern                                | Client API surface                                                                    |
+| -- | -------------------------------------- | ------------------------------------------------------------------------------------- |
+| 01 | **Field Control**                      | `executionContext`, `formContext`, `getAttribute()`, `getControl()`, `setDisabled()`  |
+| 02 | **OnChange & Visibility**              | `addOnChange()`, `getValue()`, `setVisible()`                                         |
+| 03 | **Required Level**                     | `setRequiredLevel()`, config-driven Object / Map                                      |
+| 04 | **Lookup Filtering**                   | `addPreSearch()`, `addCustomFilter()`, FetchXML                                       |
+| 05 | **Lookup Value Handling**              | Lookup array, `id`, `name`, `entityType`                                              |
+| 06 | **Retrieve Record**                    | `Xrm.WebApi.retrieveRecord()`                                                         |
+| 07 | **Retrieve Multiple Records**          | `Xrm.WebApi.retrieveMultipleRecords()`                                                |
+| 08 | **Lookup + Web API**                   | Lookup resolution combined with Dataverse queries                                     |
+| 09 | **Customer Risk & Notification**       | Business logic with `setFormNotification()`                                           |
+| 10 | **Customer Information Assistant**     | Lookup, Web API, business logic, and notifications                                    |
+| 11 | **Create Related Record**              | `Xrm.WebApi.createRecord()`, `@odata.bind`, Entity Reference                          |
+| 12 | **Update Record**                      | `Xrm.WebApi.updateRecord()`, Record ID, update data                                   |
+| 13 | **Delete Record**                      | `Xrm.WebApi.deleteRecord()`, Entity, Record ID                                        |
+| 14 | **Advanced Query & Filtering**         | `$select`, `$filter`, `$orderby`, `$top`, `retrieveMultipleRecords()`                 |
+| 15 | **Expand Related Records**             | `$expand`, Navigation Property, Related Entity                                        |
+| 16 | **Expand Related Records + Filtering** | `$expand`, Related Entity, nested `$filter`                                           |
+| 17 | **Expand Multiple Related Records**    | `$expand`, Collection-valued Navigation Property, nested `$select`, `$filter`, `$top` |
 
 New patterns are added as they prove useful in production scenarios.
 
@@ -273,6 +274,60 @@ Account
 
 This pattern is useful when the main record and its related records require different filtering conditions.
 
+### Multiple Related Records
+
+A collection-valued navigation property can return multiple related records.
+
+Example:
+
+```js
+const query =
+    "?$select=name" +
+    "&$filter=statecode eq 0" +
+    "&$expand=contact_customer_accounts(" +
+        "$select=fullname,emailaddress1" +
+        "&$filter=emailaddress1 ne null" +
+        "&$top=10" +
+    ")";
+
+Xrm.WebApi.retrieveMultipleRecords(
+    "account",
+    query
+);
+```
+
+The related records are returned as an array:
+
+```text
+account
+├── name
+└── contact_customer_accounts[]
+    ├── Contact 1
+    ├── Contact 2
+    ├── Contact 3
+    └── ...
+```
+
+This means the related records can be processed with `forEach()`:
+
+```js
+account.contact_customer_accounts.forEach(function(contact) {
+
+    console.log("Contact Fullname : %s", contact.fullname);
+    console.log("Contact Email : %s", contact.emailaddress1);
+
+});
+```
+
+The important distinction is:
+
+| `$expand` result         | Example                     | JavaScript handling        |
+| ------------------------ | --------------------------- | -------------------------- |
+| Single related record    | `primarycontactid`          | Access properties directly |
+| Multiple related records | `contact_customer_accounts` | Loop through the array     |
+
+> Navigation property names depend on the Dataverse environment and relationship metadata. Verify the actual navigation property before using it in `$expand`.
+
 ---
 
 ## Entity References
@@ -350,8 +405,11 @@ The exercises gradually move from basic Promise handling toward reusable asynchr
 ## Requirements
 
 * Dynamics 365 / Power Apps model-driven app
+
 * Dataverse environment
+
 * Modern Client API (Unified Interface)
+
 * JavaScript web resources
 
 ---
@@ -374,8 +432,9 @@ The exercises gradually move from basic Promise handling toward reusable asynchr
 | 12 | Update Record                          | [x] Completed |
 | 13 | Delete Record                          | [x] Completed |
 | 14 | Advanced Query & Filtering             | [x] Completed |
-| 15 | Expand Related Records                 | [x] Completed |
-| 16 | Expand Related Records + Filtering     | [x] Completed |
+| 15 | Expand Related Records             | [x] Completed |
+| 16 | Expand Related Records + Filtering | [x] Completed |
+| 17 | Expand Multiple Related Records    | [x] Completed |
 
 ---
 
