@@ -13,7 +13,7 @@
 
 ## Why this repo
 
-Most Dynamics 365 client scripts in the wild are copy-pasted, untyped, and still call deprecated APIs. This repo collects the patterns I use in real model-driven app implementations, each isolated so it can be dropped into a solution as a web resource with minimal changes.
+Most Dynamics 365 client scripts in the wild are copy-pasted, untyped, and still call deprecated APIs. This repo collects reusable patterns for model-driven app implementations, each isolated so it can be dropped into a solution as a web resource with minimal changes.
 
 Every example follows three rules:
 
@@ -25,26 +25,27 @@ Every example follows three rules:
 
 ## Patterns
 
-| #  | Pattern                                   | Client API surface                                                                    |
-| -- | ----------------------------------------- | ------------------------------------------------------------------------------------- |
-| 01 | **Field Control**                         | `executionContext`, `formContext`, `getAttribute()`, `getControl()`, `setDisabled()`  |
-| 02 | **OnChange & Visibility**                 | `addOnChange()`, `getValue()`, `setVisible()`                                         |
-| 03 | **Required Level**                        | `setRequiredLevel()`, config-driven Object / Map                                      |
-| 04 | **Lookup Filtering**                      | `addPreSearch()`, `addCustomFilter()`, FetchXML                                       |
-| 05 | **Lookup Value Handling**                 | Lookup array, `id`, `name`, `entityType`                                              |
-| 06 | **Retrieve Record**                       | `Xrm.WebApi.retrieveRecord()`                                                         |
-| 07 | **Retrieve Multiple Records**             | `Xrm.WebApi.retrieveMultipleRecords()`                                                |
-| 08 | **Lookup + Web API**                      | Lookup resolution combined with Dataverse queries                                     |
-| 09 | **Customer Risk & Notification**          | Business logic with `setFormNotification()`                                           |
-| 10 | **Customer Information Assistant**        | Lookup, Web API, business logic, and notifications                                    |
-| 11 | **Create Related Record**                 | `Xrm.WebApi.createRecord()`, `@odata.bind`, Entity Reference                          |
-| 12 | **Update Record**                         | `Xrm.WebApi.updateRecord()`, Record ID, update data                                   |
-| 13 | **Delete Record**                         | `Xrm.WebApi.deleteRecord()`, Entity, Record ID                                        |
-| 14 | **Advanced Query & Filtering**            | `$select`, `$filter`, `$orderby`, `$top`, `retrieveMultipleRecords()`                 |
-| 15 | **Expand Related Records**                | `$expand`, Navigation Property, Related Entity                                        |
-| 16 | **Expand Related Records + Filtering**    | `$expand`, Related Entity, nested `$filter`                                           |
-| 17 | **Expand Multiple Related Records**       | `$expand`, Collection-valued Navigation Property, nested `$select`, `$filter`, `$top` |
-| 18 | **Retrieve Multiple Records with Paging** | `result.nextLink`, `$top`, `$count`, Pagination, recursive retrieval                  |
+| #  | Pattern                                   | Client API surface                                                                   |
+| -- | ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| 01 | **Field Control**                         | `executionContext`, `formContext`, `getAttribute()`, `getControl()`, `setDisabled()` |
+| 02 | **OnChange & Visibility**                 | `addOnChange()`, `getValue()`, `setVisible()`                                        |
+| 03 | **Required Level**                        | `setRequiredLevel()`, config-driven Object / Map                                     |
+| 04 | **Lookup Filtering**                      | `addPreSearch()`, `addCustomFilter()`, FetchXML                                      |
+| 05 | **Lookup Value Handling**                 | Lookup array, `id`, `name`, `entityType`                                             |
+| 06 | **Retrieve Record**                       | `Xrm.WebApi.retrieveRecord()`                                                        |
+| 07 | **Retrieve Multiple Records**             | `Xrm.WebApi.retrieveMultipleRecords()`                                               |
+| 08 | **Lookup + Web API**                      | Lookup resolution combined with Dataverse queries                                    |
+| 09 | **Customer Risk & Notification**          | Business logic with `setFormNotification()`                                          |
+| 10 | **Customer Information Assistant**        | Lookup, Web API, business logic, and notifications                                   |
+| 11 | **Create Related Record**                 | `Xrm.WebApi.createRecord()`, `@odata.bind`, Entity Reference                         |
+| 12 | **Update Record**                         | `Xrm.WebApi.updateRecord()`, Record ID, update data                                  |
+| 13 | **Delete Record**                         | `Xrm.WebApi.deleteRecord()`, Entity, Record ID                                       |
+| 14 | **Advanced Query & Filtering**            | `$select`, `$filter`, `$orderby`, `$top`, `retrieveMultipleRecords()`                |
+| 15 | **Expand Related Records**                | `$expand`, Navigation Property, Related Entity                                       |
+| 16 | **Expand Related Records + Filtering**    | `$expand`, Related Entity, nested `$filter`                                          |
+| 17 | **Expand Multiple Related Records**       | Collection-valued Navigation Property, nested `$select`, `$filter`, `$top`           |
+| 18 | **Retrieve Multiple Records with Paging** | `result.nextLink`, `$top`, `$count`, Pagination, recursive retrieval                 |
+| 19 | **Execute Multiple Requests**             | `Xrm.WebApi.online.executeMultiple()`, Request Object, `getMetadata()`, Batch Update |
 
 New patterns are added as they prove useful in production scenarios.
 
@@ -76,7 +77,8 @@ Dynamic365-client-scripting-toolkit/
 │   ├── advanced-query.js
 │   ├── expand-related-records.js
 │   ├── expand-related-records-filter.js
-│   └── retrieve-multiple-records-paging.js
+│   ├── retrieve-multiple-records-paging.js
+│   └── execute-multiple.js
 │
 └── notifications/
     └── form-notification.js
@@ -88,7 +90,7 @@ Dynamic365-client-scripting-toolkit/
 
 The toolkit draws a hard line between the two objects developers most often confuse.
 
-### **Attribute — the data layer**
+### Attribute — the data layer
 
 ```js
 const formContext = executionContext.getFormContext();
@@ -100,13 +102,12 @@ const value = attribute.getValue();
 
 Use it for reading and writing values, required level, and change events.
 
-### **Control — the UI layer**
+### Control — the UI layer
 
 ```js
 const control = formContext.getControl("fieldname");
 
 control.setVisible(false);
-
 control.setDisabled(true);
 ```
 
@@ -153,8 +154,12 @@ Xrm.WebApi.retrieveRecord(
     accountId,
     "?$select=name,telephone1,websiteurl"
 ).then(
-    result => { /* apply to form */ },
-    error  => { /* surface to user, don't swallow */ }
+    result => {
+        // apply to form
+    },
+    error => {
+        // surface to user, don't swallow
+    }
 );
 ```
 
@@ -176,7 +181,7 @@ The toolkit also demonstrates common OData query options:
 * `$filter` — server-side filtering
 * `$orderby` — server-side sorting
 * `$top` — limit returned records
-* `$count` — request the total matching record count
+* `$count` — return total matching record count
 * `$expand` — related record traversal
 * FetchXML — lookup pre-search filtering
 
@@ -195,11 +200,13 @@ Xrm.WebApi.retrieveMultipleRecords(
 );
 ```
 
-### Related Records with `$expand`
+---
 
-`$expand` can be used to retrieve related records together with the main record.
+## Related Records with `$expand`
 
-For example, an Account can retrieve its Primary Contact:
+`$expand` allows a query to retrieve related records together with the main entity.
+
+Example:
 
 ```js
 const query =
@@ -208,14 +215,33 @@ const query =
     "&$expand=primarycontactid(" +
         "$select=fullname,emailaddress1" +
     ")";
-
-Xrm.WebApi.retrieveMultipleRecords(
-    "account",
-    query
-);
 ```
 
-The returned structure can be accessed as:
+The result can then be accessed through the navigation property:
+
+```js
+result.entities.forEach(function(account) {
+
+    console.log("Account Name : " + account.name);
+
+    if (!account.primarycontactid) {
+        console.log("No Primary Contact");
+        return;
+    }
+
+    console.log(
+        "Contact Name : " +
+        account.primarycontactid.fullname
+    );
+
+    console.log(
+        "Contact Email : " +
+        account.primarycontactid.emailaddress1
+    );
+});
+```
+
+Conceptually:
 
 ```text
 account
@@ -225,11 +251,13 @@ account
     └── emailaddress1
 ```
 
-`primarycontactid` is a navigation property that points to the related Contact.
+The navigation property name depends on the Dataverse relationship metadata and should be verified in the target environment.
 
-### Filtering Related Records
+---
 
-A `$filter` can also be applied inside `$expand`.
+## Filtering Related Records
+
+A nested `$filter` can be used inside `$expand`.
 
 ```js
 const query =
@@ -239,18 +267,23 @@ const query =
         "$select=fullname,emailaddress1" +
         "&$filter=emailaddress1 ne null" +
     ")";
-
-Xrm.WebApi.retrieveMultipleRecords(
-    "account",
-    query
-);
 ```
 
-The outer `$filter` applies to the Account.
+The important distinction is:
 
-The nested `$filter` applies to the related Contact.
+```text
+Main $filter
+    ↓
+filters Account
 
-### Multiple Related Records
+Nested $filter
+    ↓
+filters related Contact
+```
+
+---
+
+## Multiple Related Records
 
 Collection-valued navigation properties return an array of related records.
 
@@ -263,80 +296,80 @@ const query =
         "&$filter=emailaddress1 ne null" +
         "&$top=10" +
     ")";
-
-Xrm.WebApi.retrieveMultipleRecords(
-    "account",
-    query
-);
 ```
 
 The related records can then be processed with `forEach()`:
 
 ```js
-account.contact_customer_accounts.forEach(function(contact) {
+result.entities.forEach(function(account) {
 
-    console.log(
-        "Contact Fullname : %s",
-        contact.fullname
-    );
+    console.log("Account Name : " + account.name);
 
-    console.log(
-        "Contact Email : %s",
-        contact.emailaddress1
-    );
+    if (!account.contact_customer_accounts) {
+        console.log("No Related Contacts");
+        return;
+    }
 
+    account.contact_customer_accounts.forEach(function(contact) {
+
+        console.log(
+            "Contact Fullname : " +
+            contact.fullname
+        );
+
+        console.log(
+            "Contact Email : " +
+            contact.emailaddress1
+        );
+
+    });
 });
 ```
 
-Navigation property names depend on the Dataverse environment and relationship metadata. Verify the actual navigation property before using it in `$expand`.
+Conceptually:
 
-### Pagination with `nextLink`
+```text
+account
+├── name
+└── contact_customer_accounts[]
+    ├── contact
+    ├── contact
+    └── contact
+```
 
-`retrieveMultipleRecords()` can return a `nextLink` when more records are available than the current page.
+The navigation property must match the relationship metadata in the target Dataverse environment.
 
-A query can use `$top` to control the number of records requested per page:
+---
+
+## Pagination
+
+`retrieveMultipleRecords()` may return a `nextLink` when more records are available.
 
 ```js
-const query =
+Xrm.WebApi.retrieveMultipleRecords(
+    "account",
     "?$select=name,telephone1" +
     "&$filter=statecode eq 0" +
     "&$top=10" +
     "&$orderby=name desc" +
-    "&$count=true";
-
-Xrm.WebApi.retrieveMultipleRecords(
-    "account",
-    query
+    "&$count=true"
 ).then(
     result => {
 
-        result.entities.forEach(function(account) {
-
-            console.log("Account Name : " + account.name);
-            console.log("Telephone : " + account.telephone1);
-
-        });
+        console.log(result.entities);
 
         if (result.nextLink) {
-
-            // Request the next page
-            Xrm.WebApi.retrieveMultipleRecords(
-                "account",
-                result.nextLink
-            );
-
+            getNextPage(result.nextLink);
         }
 
     },
     error => {
-
         console.log(error.message);
-
     }
 );
 ```
 
-For multiple pages, the `nextLink` can be passed recursively to a helper function:
+The `nextLink` should be passed directly into the next `retrieveMultipleRecords()` call.
 
 ```js
 function getNextPage(nextLink, accounts) {
@@ -350,41 +383,148 @@ function getNextPage(nextLink, accounts) {
             accounts.push(...nextResult.entities);
 
             if (nextResult.nextLink) {
-
                 getNextPage(
                     nextResult.nextLink,
                     accounts
                 );
-
             } else {
-
                 console.log(
                     "Total records stored : " +
                     accounts.length
                 );
-
             }
 
         },
         error => {
-
-            console.log(
-                "Error : " +
-                error.message
-            );
-
+            console.log("Error : " + error.message);
         }
     );
 }
 ```
 
-Using the spread operator with `push()` adds each returned entity to the existing array:
+### Why `push(...entities)`?
 
 ```js
 accounts.push(...nextResult.entities);
 ```
 
-This keeps all records in a single array while the pagination continues.
+The spread operator expands the array so every entity is added to the existing accumulator.
+
+```text
+nextResult.entities
+        ↓
+[Account1, Account2, Account3]
+        ↓
+       ...
+        ↓
+accounts
+[Account1, Account2, Account3]
+```
+
+This allows records from multiple pages to be stored in one array.
+
+---
+
+## Execute Multiple Requests
+
+`Xrm.WebApi.online.executeMultiple()` allows multiple Dataverse requests to be sent as a batch.
+
+A request object contains the target entity, record ID, payload, and metadata describing the operation.
+
+Example:
+
+```js
+const updateData = {
+    description: "Updated using Execute Multiple"
+};
+
+const requests = [];
+
+result.entities.forEach(function(account) {
+
+    const request = {
+
+        etn: "account",
+
+        id: account.accountid.replace(/[{}]/g, ""),
+
+        payload: updateData,
+
+        getMetadata: function() {
+
+            return {
+                boundParameter: null,
+                parameterTypes: {},
+                operationType: 2,
+                operationName: "Update"
+            };
+
+        }
+
+    };
+
+    requests.push(request);
+});
+
+Xrm.WebApi.online.executeMultiple(requests);
+```
+
+The request flow is:
+
+```text
+retrieveMultipleRecords()
+        ↓
+Retrieve Accounts
+        ↓
+Create requests[]
+        ↓
+Request 1 → Update Account
+Request 2 → Update Account
+Request 3 → Update Account
+        ↓
+executeMultiple(requests)
+        ↓
+Batch Request
+```
+
+### Request metadata
+
+For an Update request:
+
+```js
+getMetadata: function() {
+
+    return {
+        boundParameter: null,
+        parameterTypes: {},
+        operationType: 2,
+        operationName: "Update"
+    };
+
+}
+```
+
+`operationType: 2` represents an Update operation.
+
+### Processing batch responses
+
+Each response can be checked individually:
+
+```js
+response.forEach(function(res, index) {
+
+    console.log("Request " + index);
+
+    if (res.ok) {
+        console.log("Success");
+    } else {
+        console.log("Failed");
+    }
+
+});
+```
+
+This is useful when a batch contains multiple independent operations and individual request results need to be inspected.
 
 ---
 
@@ -420,7 +560,7 @@ This creates a Task and sets the selected Account as its **Regarding** record.
 
 The examples use both Promise-based and `async/await` patterns.
 
-### **Promise**
+### Promise
 
 ```js
 Xrm.WebApi.retrieveRecord(
@@ -429,19 +569,15 @@ Xrm.WebApi.retrieveRecord(
     "?$select=name"
 ).then(
     result => {
-
         console.log(result.name);
-
     },
     error => {
-
         console.log(error.message);
-
     }
 );
 ```
 
-### **Async / Await**
+### Async / Await
 
 ```js
 async function retrieveAccountData(accountId) {
@@ -455,7 +591,7 @@ async function retrieveAccountData(accountId) {
 }
 ```
 
-The exercises gradually move from basic Promise handling toward reusable asynchronous functions, recursive pagination, and reusable asynchronous helpers.
+The exercises gradually move from basic Promise handling toward reusable asynchronous functions, recursive pagination, and batch operations.
 
 ---
 
@@ -500,6 +636,7 @@ The exercises gradually move from basic Promise handling toward reusable asynchr
 | 16 | Expand Related Records + Filtering    | [x] Completed |
 | 17 | Expand Multiple Related Records       | [x] Completed |
 | 18 | Retrieve Multiple Records with Paging | [x] Completed |
+| 19 | Execute Multiple Requests             | [x] Completed |
 
 ---
 
